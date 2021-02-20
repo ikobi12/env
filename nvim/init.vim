@@ -21,6 +21,9 @@ Plug 'neovim/nvim-lspconfig'
 Plug 'nvim-lua/completion-nvim'
 Plug 'nvim-lua/diagnostic-nvim'
 
+" Treesitter
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
 " fuzzy search for strings 
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
@@ -39,7 +42,8 @@ Plug 'scrooloose/nerdtree'
 Plug 'sheerun/vim-polyglot'
 
 " insert matching brackets, parens or quote
-Plug 'jiangmiao/auto-pairs'
+"Plug 'jiangmiao/auto-pairs'
+Plug 'tmsvg/pear-tree'
 
 " git merge, rebase, diff tool (LEARN HOW TO USE, KEY BIND)
 Plug 'tpope/vim-fugitive'
@@ -65,17 +69,40 @@ call plug#end()
 " Language server protocol
 """""""""""""""""""""""""""""""""""""
 lua << END
-    local nvim_lsp = require'nvim_lsp'
+    local nvim_lsp = require'lspconfig'
     local api = vim.api
+    
+    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+        vim.lsp.diagnostic.on_publish_diagnostics, {
+            virtual_text = true,
+            signs = true,
+            update_in_insert = false,
+        }
+    )
 
     function on_attach(client, bufnr)
-        require'diagnostic'.on_attach()
         require'completion'.on_attach()
         api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
     end
 
     nvim_lsp.pyls.setup{on_attach=on_attach}
 END
+
+"""""""""""""""""""""""""""""""""""""
+" Treesitter
+"""""""""""""""""""""""""""""""""""""
+lua <<EOF
+  -- require "nvim-treesitter.parsers".get_parser_configs().markdown = nil
+  require'nvim-treesitter.configs'.setup {
+    ensure_installed = "maintained",
+    ident = {
+      enable = true,
+    },
+    highlight = {
+      enable = true,
+    },
+  }
+EOF
 
 """""""""""""""""""""""""""""""""""""
 " Editor appearance
@@ -97,6 +124,8 @@ set splitright
 """""""""""""""""""""""""""""""""""""
 " Editor functionality 
 """""""""""""""""""""""""""""""""""""
+set encoding=utf-8 " Set right encoding and formats
+set fileformat=unix
 " Make search case insensitive by default (add \C to search pattern to make it sensitive)
 set ignorecase 
 " If search pattern contains capitals, make case sensitive search
@@ -134,10 +163,6 @@ nnoremap <C-K> <C-W><C-K>
 nnoremap <C-L> <C-W><C-L>
 nnoremap <C-H> <C-W><C-H>
 
-" Git diff
-nnoremap <leader>gt :diffget //2<CR>
-nnoremap <leader>gm :diffget //3<CR>
-
 " Move line up/down
 nnoremap <A-j> :m .+1<CR>==
 nnoremap <A-k> :m .-2<CR>==
@@ -146,11 +171,19 @@ inoremap <A-k> <Esc>:m .-2<CR>==gi
 vnoremap <A-j> :m '>+1<CR>gv=gv
 vnoremap <A-k> :m '<-2<CR>gv=gv
 
+" Paste multiple times with p
+xnoremap p pgvy
+
 " Delete with copying to black hole register
-"nnoremap dd "_dd
+nnoremap dd "_dd
 nnoremap <leader>d "_d
 xnoremap <leader>d "_d
 xnoremap <leader>p "_dP
+
+" Fugitive git conflict resolution
+nnoremap <leader>gd :Gvdiffsplit!<CR>
+nnoremap gdh :diffget //2<CR>
+nnoremap gdl :diffget //3<CR>
 
 " NerdTree
 map <C-n> :NERDTreeToggle<CR>
@@ -159,16 +192,26 @@ let NERDTreeShowHidden=1
 " ALE linter
 nmap <silent> <C-k> <Plug>(ale_previous_wrap)
 nmap <silent> <C-j> <Plug>(ale_next_wrap)
+
 " Autocompletion
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
 nnoremap <silent><C-]> :call <SID>definition()<CR>
+nnoremap <silent>K :call <SID>show_documentation()<CR>
 
 function! s:definition()
   if (index(['vim','help'], &filetype) >= 0)
     execute 'tjump '.expand('<cword>')
   else
     lua vim.lsp.buf.definition()
+  endif
+endfunction
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  else
+    lua vim.lsp.buf.hover()
   endif
 endfunction
