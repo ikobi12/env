@@ -132,7 +132,7 @@ set ignorecase
 set smartcase 
 " Linter
 let g:ale_linters = {
-            \   'python': ['pyls', 'mypy'],
+            \   'python': ['flake8', 'pyls'],
             \   'yaml': ['yamllint'],
             \   'cloudformation': ['cfn-lin']
             \}
@@ -142,6 +142,12 @@ let g:ale_fixers = {
             \   'python': ['black'],
             \   'json': ['jq'],
             \}
+"let g:ale_python_auto_pipenv = 1
+"let g:ale_python_flake8_use_global = 1
+"let g:ale_python_flake8_executable = 'python3 -m flake8'
+"let g:ale_python_flake8_options = '--config=$HOME/.config/flake8'
+
+let g:ale_fix_on_save = 1
 
 " Autocomplete
 let g:completion_matching_strategy_list = ['exact', 'substring', 'fuzzy']

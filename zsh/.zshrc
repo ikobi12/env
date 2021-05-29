@@ -18,19 +18,9 @@ plugins=(git zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='vim'
-# fi
-
 # Aliases
 # For a full list of active aliases, run `alias`.
-
+alias t="cdw && cd spark_landing_to_raw && senv && v src/landing_to_raw/anonymization.py"
 # nvim
 alias v="nvim"
 alias vv="v ."
@@ -44,14 +34,19 @@ function update_nvim () {
     cd ~
     sudo rm -r neovim
 }
-
+#kubectl
+alias k="kubectl"
+alias kl="k logs"
+alias ka="k get all"
+alias kp="k get pods"
+alias kd="k describe"
 # Utility aliases
-function sync_env () {
+function push_env () {
     echo "Copying nvim config"
     cp ~/.config/nvim/init.vim ~/env/nvim/
     echo "Copying zsh config"
     cp ~/.zshrc ~/env/zsh/
-    cd ~/env && gaa && gcm "sync_env `uname`" && gp && cd -
+    cd ~/env && gaa && gcm "sync_env `uname`" && gp && cd - && echo "Env pushed"
 }
 alias zshconfig="v ~/.zshrc"
 function mkcd () {
@@ -76,7 +71,7 @@ alias gc="git checkout"
 alias gcma="git checkout master"
 alias gcd="git checkout development"
 
-# Python 
+# Python
 export PIP_REQUIRE_VIRTUALENV=true
 alias senv="source venv/bin/activate"
 alias jenv="senv && jupyter lab"
@@ -90,11 +85,11 @@ function sv () {
         senv && v $1
     fi
 }
-function mkenv_empty { 
-    python3 -m venv venv 
+function mkenv_empty {
+    python3 -m venv venv
     source venv/bin/activate
-    pip install -U pip 
-    pip install wheel 
+    pip install -U pip
+    pip install wheel
     pip install python-language-server flake8 mypy  # lang. server for autocomplete, linters for ALE
 }
 function mkenv () {
@@ -121,26 +116,34 @@ function mkenv () {
     fi
 }
 
-# work related 
+# work related
 alias pycharm="sh /usr/local/bin/pycharm-community-2020.2.3/bin/pycharm.sh"
 alias cdw="cd ~/work"
+function restart_ssh_agent () {
+    echo 'Restarting ssh agent'
+    killall ssh-agent
+    ssh-agent $SHELL
+}
+function fix_ssh () {
+    restart_ssh_agent
+    echo 'Adding keys'
+    ssh-add ~/.ssh/gitlab_ivan
+}
+function getgiphy () {
+    if [ $# -lt 2 ]
+    then
+        echo "What am I supposed to download? Give me a link and the name under which to save it, dingus!"
+    else
+        curl $1 --output /mnt/c/Users/ib01152/Desktop/memes/$2.gif
+    fi
+}
 function pull_project () {
     project=$1
     git clone git@gitlab.rgnservices.com:grp-data-engineering/$project.git
     cd $project
     mkenv r
 }
-function getgiphy () {
-    if [ $# -lt 2 ]
-    then
-        echo "What am I supposed to download? Give me a link and the name under which to save it, dumbass!"
-    else
-        curl $1 --output /mnt/c/Users/ib01152/Desktop/memes/$2.gif
-    fi
-}
-
 
 # XServer for WSL
 export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0
 export LIBGL_ALWAYS_INDIRECT=1
-
